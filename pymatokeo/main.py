@@ -187,7 +187,10 @@ class Pymatokeo:
         self.studentId=studentId
         self.level=level
         self.headers=get_headers(studentId,level)
-        self.results=get_data(studentId,level)
+        if self.level=='ftna':
+            self.results=get_data_ftna(studentId,level)
+        else:
+            self.results=get_data(studentId,level)
         self.student_results=searchStudentResults(studentId,self.results)
         self.result_dict=dict(
             zip(self.headers,self.student_results)
@@ -213,4 +216,3 @@ if __name__ == '__main__':
         for i in r:
             print(f'{i}: {r[i]}')
         print('---------------------------------------')
-
