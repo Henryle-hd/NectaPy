@@ -15,7 +15,7 @@ setup(
     description="A Python package for accessing NECTA (National Examinations Council of Tanzania) results",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/NectaPy",
+    url="https://github.com/Henryle-hd/NectaPy",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
