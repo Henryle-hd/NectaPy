@@ -1,0 +1,13 @@
+primary:
+sfna = 2017 - 2024
+psle = 2016 - 2024
+
+secondary:
+ftna = 2022 - 2024
+csee = 2015 - 2024
+acsee = 2014 - 2024
+
+College:
+gatce = 2019 - 2024
+dsee = 2019 - 2024
+gatscce = 2019 - 2024
