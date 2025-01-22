@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
 
-CURRENT_SUPPORT_ONLY=['acsee','csee','ftna']
+CURRENT_SUPPORT_ONLY=['acsee','csee','ftna','sfna']
 CURRENT_YEAR = datetime.now().year
 def response(url):
     try:
@@ -32,11 +32,19 @@ def determine_y_url_(studentId:str,level:str)->tuple:
                 exit()
         elif level.lower() =='ftna':
             if year>=2024 and year<=CURRENT_YEAR-1:
-                url=f'https://matokeo.necta.go.tz/results/{year}/ftna/FTNA{year}/{schoolId.upper()}.htm'
-            elif year>=2022 and year<=2023:
-                url=f'https://onlinesys.necta.go.tz/results/{year}/ftna/results/{schoolId.upper()}.htm'
+                url=f'https://matokeo.necta.go.tz/results/{year}/sfna/SFNA{year}/{schoolId.upper()}.htm'
+            elif year>=2017 and year<=2023:
+                url=f'https://onlinesys.necta.go.tz/results/{year}/sfna/results/{schoolId.upper()}.htm'
             else:
                 print(f"We provide only rersult from 2022 and {CURRENT_YEAR-1} for now, for FTNA (Form Two).")
+                exit()
+        elif level.lower() =='sfna':
+            if year>=2024 and year < CURRENT_YEAR:
+                url=f'https://matokeo.necta.go.tz/results/{year}/sfna/SFNA{year}/{schoolId}.htm'
+            elif year>=2022 and year<=2023:
+                url=f'https://onlinesys.necta.go.tz/results/{year}/sfna/results/{schoolId}.htm'
+            else:
+                print(f"We provide only rersult from 2022 and {CURRENT_YEAR-1} for now, for SFNA (Form Four).")
                 exit()
         else:
             print("current level not supported, we're working on it")
@@ -69,6 +77,8 @@ def table_tr(studentId:str,level:str):
             #     return table[0].find_all('tr')
             else:
                 print(f"We provide only rersult from 2022 and {CURRENT_YEAR-1} for now, for FTNA (Form Two).")
+        elif level=='sfna':
+            return table[2].find_all('tr')
         else:
             print("current level not supported, we're working on it")
             exit()
@@ -106,6 +116,8 @@ def get_data(studentId:str,level:str):
         for item in element:
             try:
                 row_item=item.get_text().replace("\n",'').replace("\r",'').strip()
+                if level=='sfna':
+                    row_item=row_item.replace("-","/")
                 if row_item:
                     data_row.append(row_item)
             except:
@@ -182,7 +194,7 @@ def dictStudentResults(studentId:str,level:str)->dict:
 
 class Pymatokeo:
     def __init__(self):
-       pass
+        pass
     def matokeo(self,studentId:str,level:str):
         self.studentId=studentId
         self.level=level
@@ -203,16 +215,9 @@ class Pymatokeo:
 
 if __name__ == '__main__':
     while True:
-        level=int(input('level(1. csee/ 2. acsee/ 3. ftna): ').strip())
-        studentId=input('student_id(XXXXX/XXXX/XXXX): ').strip()
-        if level==1:
-            r=Pymatokeo().matokeo(studentId,'csee')
-        elif level==2:
-            r=Pymatokeo().matokeo(studentId,'acsee')
-        elif level==3:
-            r=Pymatokeo().matokeo(studentId,'ftna')
-        else:
-            print("choose a valid level!")
+        level=input('(csee/acsee/ftna/sfna): ').strip()
+        studentId=input('STUDENT ID (XXXXX/XXXX/XXXX): ').strip()
+        r=Pymatokeo().matokeo(studentId,level)
         for i in r:
             print(f'{i}: {r[i]}')
         print('---------------------------------------')
