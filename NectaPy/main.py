@@ -222,10 +222,10 @@ def dictStudentResults(studentId:str,level:str)->dict:
     return result_dict
 
 
-class Pymatokeo:
+class Necta:
     def __init__(self):
         pass
-    def matokeo(self,studentId:str,level:str):
+    def st_result(self,studentId:str,level:str):
         self.studentId=studentId
         self.level=level
         self.headers=get_headers(studentId,level)
@@ -247,7 +247,7 @@ if __name__ == '__main__':
     while True:
         level=input('(csee/acsee/ftna/sfna/psle/gatce/dsee/gatscce): ').strip()
         studentId=input('STUDENT ID (XXXXX/XXXX/XXXX): ').strip()
-        r=Pymatokeo().matokeo(studentId,level)
+        r=Necta().st_result(studentId,level)
         for i in r:
             print(f'{i}: {r[i]}')
         print('---------------------------------------')
