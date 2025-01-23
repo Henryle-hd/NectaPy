@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
+from typing import Literal
+
 
 CURRENT_SUPPORT_ONLY=['acsee','csee','ftna','sfna','psle','gatce','dsee','gatscce']
 CURRENT_YEAR = datetime.now().year
@@ -10,8 +12,8 @@ def response(url):
         response.raise_for_status()
         return response
     except requests.exceptions.RequestException as e:
-        print(f"Error occurred: {e}")
-        exit()
+        # print(f"Error occurred: {e}")
+        return "error", {e}
 
 def determine_y_url_(studentId:str,level:str)->tuple:
     ''' Takes a student id and level, returns a tuple containing right url based on studentID and the year.'''
@@ -20,48 +22,45 @@ def determine_y_url_(studentId:str,level:str)->tuple:
 
     if level.lower() in CURRENT_SUPPORT_ONLY:
         if level.lower() =='csee':
-            if year>=2015 and year<=CURRENT_YEAR-2:
+            if year>=2024 and year<CURRENT_YEAR:
+                url=f"https://matokeo.necta.go.tz/results/{year}/csee/CSEE{year}/CSEE{year}/results/{schoolId}.htm"
+            elif year>=2015 and year<=CURRENT_YEAR-2:
                 url=f'https://onlinesys.necta.go.tz/results/{year}/csee/results/{schoolId}.htm'
             else:
-                print(f"Invalid year. Please choose a year between 2015 and the {CURRENT_YEAR-2}.")
-                exit()
+                return "error",f"Invalid year. Please choose a year between 2015 and the {CURRENT_YEAR-1}."
         elif level.lower() =='acsee':
             if year>=2014 and year<=CURRENT_YEAR-1:
                 url=f'https://onlinesys.necta.go.tz/results/{year}/acsee/results/{schoolId}.htm'
             else:
-                print(f"Invalid year. Please choose a year between 2014 and the {CURRENT_YEAR-1}.")
-                exit()
+                return "error",f"Invalid year. Please choose a year between 2014 and the {CURRENT_YEAR-1}."
         elif level.lower() =='ftna':
             if year>=2024 and year<=CURRENT_YEAR-1:
                 url=f'https://matokeo.necta.go.tz/results/{year}/ftna/FTNA{year}/{schoolId.upper()}.htm'
             elif year>=2022 and year<=2023:
-                # Later will the start year will be 2017
+                # Later the start year will be 2017
                 url=f'https://onlinesys.necta.go.tz/results/{year}/ftna/results/{schoolId.upper()}.htm'
             else:
-                print(f"We provide only rersult from 2022 and {CURRENT_YEAR-1} for now, for FTNA (Form Two).")
-                exit()
+                return "error",f"We provide only rersult from 2022 and {CURRENT_YEAR-1} for now, for FTNA (Form Two)."
         elif level.lower() =='sfna':
             if year>=2024 and year < CURRENT_YEAR:
                 url=f'https://matokeo.necta.go.tz/results/{year}/sfna/SFNA{year}/{schoolId}.htm'
             elif year>=2022 and year<=2023:
                 url=f'https://onlinesys.necta.go.tz/results/{year}/sfna/results/{schoolId}.htm'
             else:
-                print(f"We provide only rersult from 2017 and {CURRENT_YEAR-1} for now, for SFNA (S.Four).")
-                exit()
+                return "error",f"We provide only rersult from 2017 and {CURRENT_YEAR-1} for now, for SFNA (S.Four)."
         elif level.lower() =='psle':
             if year>=2016 and year<CURRENT_YEAR:
                 url=f'https://onlinesys.necta.go.tz/results/{year}/psle/results/shl_{schoolId}.htm'
             else:
-                print(f"We provide only rersult from 2016 and {CURRENT_YEAR-1} for now, for PSLE (S.Four).")
-                exit()
+                return "error",f"We provide only rersult from 2016 and {CURRENT_YEAR-1} for now, for PSLE (S.Four)."
         elif level.lower() =='gatce' or level.lower() =='dsee' or level.lower() =='gatscce':
             schoolId=schoolId[2:]
             if year >=2019 and year <= CURRENT_YEAR-1:
                 url=f'https://onlinesys.necta.go.tz/results/{year}/{level.lower()}/results/{schoolId}.htm'
             else:
-                print(f"We support only years between 2019 and {CURRENT_YEAR-1}.")
+                return "error",f"We support only years between 2019 and {CURRENT_YEAR-1}."
         else:
-            print("current level not supported, we're working on it")
+            return "error","current level not supported, we're working on it"
     return url,year
 
 # print(determine_y_url_('E0544/0001/2024','gatscce'))
@@ -75,22 +74,16 @@ def table_tr(studentId:str,level:str):
                 return table[0].find_all('tr')
             elif year >=2019 and year <= CURRENT_YEAR-1:
                 return table[2].find_all('tr')
-            else:
-                print(f"We support only years between 2014 and {CURRENT_YEAR-1}.")
         elif level=='acsee':
             if year >=2014 and year <=2019:
                 return table[0].find_all('tr')
             elif year >=2020 and year <= CURRENT_YEAR-1:
                 return table[2].find_all('tr')
-            else:
-                print(f"We support only years between 2014 and {CURRENT_YEAR-1}.")
         elif level=='ftna':
             if year >=2022 and year <= CURRENT_YEAR-1:
                 return table[2]
             # elif year >=2017 and year <= 2021:
             #     return table[0].find_all('tr')
-            else:
-                print(f"We provide only rersult from 2022 and {CURRENT_YEAR-1} for now, for FTNA (Form Two).")
         elif level=='sfna':
             return table[2].find_all('tr')
         elif level=='psle':
@@ -99,20 +92,13 @@ def table_tr(studentId:str,level:str):
             elif year >=2016 and year <= 2018:
                 tr=soup.find_all('tr')
                 return tr
-            else:
-                print(f"Invalid year. Please choose a year between 2019 and the {CURRENT_YEAR-1}.")
-                exit()
         elif level.lower() =='gatce' or level.lower() =='dsee' or level.lower() =='gatscce':
             if year >=2019 and year <= CURRENT_YEAR-1:
                 return table[0].find_all('tr')
-            else:
-                print(f"We support only years between 2019 and {CURRENT_YEAR-1}.")
-        else:
-            print("current level not supported, we're working on it")
-            exit()
     except Exception as e:
-        print(f"Error occurred: {e}")
+        return "error", {e}
 
+# testing
 # print(table_tr('E0544/0001/2024','gatscce'))
 # with open('results.html','w') as file:
 #     file.write(str(table_tr('P0104/0001/2024','ftna')))
@@ -203,45 +189,61 @@ def searchStudentResults(studentId,results):
 
 
 def dictStudentResults(studentId:str,level:str)->dict:
-    '''return single student results in dictionary format
-        {'CNO': 'P0134/0014',
-        'SEX': 'F',
-        'AGGT': '-',
-        'DIV': '0',
-        'DETAILED SUBJECTS': "CIV - 'F'   HIST - 'F'   GEO - 'F'   KISW - 'F'   ENGL - 'F'"}
-    '''
+    '''return single student results in dictionary format'''
+    error,sms=determine_y_url_(studentId,level)
+    if error=='error':
+        return {'error':sms}
+    else:
+        url,year=determine_y_url_(studentId,level)
+    if type(response(url)) is tuple:
+        error,sms=response(url)
+        return {'error':sms}
     headers=get_headers(studentId,level)
     if level=='ftna':
         results=get_data_ftna(studentId,level)
     else:
         results=result_to_truple(studentId,level)
     student_results=searchStudentResults(studentId,results)
-    result_dict=dict(
-        zip(headers,student_results)
-    )
+    result_dict=dict(zip(headers,student_results))
     return result_dict
 
 
+# print(dictStudentResults('s3266/0064/2024','csee'))
 class Necta:
-    def __init__(self):
-        pass
-    def st_result(self,studentId:str,level:str):
-        self.studentId=studentId
-        self.level=level
-        self.headers=get_headers(studentId,level)
-        if self.level=='ftna':
-            self.results=get_data_ftna(studentId,level)
-        else:
-            self.results=get_data(studentId,level)
-        self.student_results=searchStudentResults(studentId,self.results)
-        self.result_dict=dict(
-            zip(self.headers,self.student_results)
-        )
-        return self.result_dict
+    # def __init__(self):
+    #     pass
+    def st_result(self,studentId:str,level:Literal['sfna','psle','ftna','csee','acsee','gatce','dsee','gatscce'])->dict:
+        """Get student examination results from NECTA.
+    Args:
+        studentId (str): Student ID in format 'XXXXX/XXXX/YYYY' where YYYY is the year
+        Example: 'S4177/0003/2023'
+        level (str): Examination level, one of:
+                    - 'sfna' (Standard 2, 2017-2024)
+                    - 'psle' (Standard 7, 2016-2024)
+                    - 'ftna' (Form 2, 2022-2024)
+                    - 'csee' (Form 4, 2015-2024)
+                    - 'acsee' (Form 6, 2014-2024)
+                    - 'gatce' (College, 2019-2024)
+                    - 'dsee' (College, 2019-2024)
+                    - 'gatscce' (College, 2019-2024)
+    Returns:
+        dict: Student results with headers as keys and results as values
+            Example: {
+                "CNO": "XXXX/0003",
+                "PReM NO": "xxxxxxx"
+                "CANDIDATE NAME": "XXXXX XXXXX XXXXX",
+                "SEX": "F",
+                "AGGT": "18",
+                "DIV": "II",
+                "DETAILED SUBJECTS": "CIV-'D' HIST-'C' GEO-'B' KISW-'C' ENGL-'B' PHY-'D' CHEM-'B' BIO-'C' B/MATH-'C'"
+            }
+    """
+        self.result=dictStudentResults(studentId,level)
+        return self.result
     def __str__(self):
-        return str(self.result_dict)
+        return str(self.result)
     def __repr__(self):
-        return str(self.result_dict)
+        return str(self.result)
 
 if __name__ == '__main__':
     while True:
