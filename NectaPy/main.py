@@ -4,8 +4,13 @@ from datetime import datetime
 from typing import Literal
 
 
+
 CURRENT_SUPPORT_ONLY=['acsee','csee','ftna','sfna','psle','gatce','dsee','gatscce']
 CURRENT_YEAR = datetime.now().year
+
+
+
+# Making get request
 def response(url):
     try:
         response=requests.get(url)
@@ -15,6 +20,11 @@ def response(url):
         # print(f"Error occurred: {e}")
         return "error", {e}
 
+
+
+
+
+# determining url to use
 def determine_y_url_(studentId:str,level:str)->tuple:
     ''' Takes a student id and level, returns a tuple containing right url based on studentID and the year.'''
     year=int(studentId.split('/')[2])
@@ -63,8 +73,13 @@ def determine_y_url_(studentId:str,level:str)->tuple:
             return "error","current level not supported, we're working on it"
     return url,year
 
-# print(determine_y_url_('E0544/0001/2024','gatscce'))
+
+
+
+
+# Finding right table to extract data
 def table_tr(studentId:str,level:str):
+    '''Returns table row with student information'''
     url,year=determine_y_url_(studentId,level)
     try:
         soup= BeautifulSoup(response(url=url).content,'html.parser')
@@ -98,10 +113,9 @@ def table_tr(studentId:str,level:str):
     except Exception as e:
         return "error", {e}
 
-# testing
-# print(table_tr('E0544/0001/2024','gatscce'))
-# with open('results.html','w') as file:
-#     file.write(str(table_tr('P0104/0001/2024','ftna')))
+
+
+
 
 def get_headers(studentId:str,level:str):
     """ Get the headers of the table. By accessing the first row of the table."""
@@ -122,7 +136,9 @@ def get_headers(studentId:str,level:str):
                 continue
     return list_headers
 
-# print(get_headers('P0104/0001/2023','csee'))
+
+
+
 
 def get_data(studentId:str,level:str):
     """ Get the data of the table. By accessing the second row .... n row of the table."""
@@ -141,6 +157,8 @@ def get_data(studentId:str,level:str):
         data.append(data_row)
     return data
 
+
+
 def get_data_ftna(studentId:str,level:str):
     '''Geting the data from the ftna table, By accessing the second row .... n row of the table.'''
     header_row = table_tr(studentId,level).find('tr')
@@ -158,13 +176,15 @@ def get_data_ftna(studentId:str,level:str):
             current_row = []
     return data
 
-# print(get_data_ftna('P0104/0001/2024','ftna'))
+
 
 def result_to_truple(studentId:str,level:str)->tuple:
     result=[]
     for row in get_data(studentId,level):
         result.append(tuple(row))
     return result
+
+
 
 
 def searchStudentResults(studentId,results):
@@ -188,6 +208,8 @@ def searchStudentResults(studentId,results):
     )
 
 
+
+
 def dictStudentResults(studentId:str,level:str)->dict:
     '''return single student results in dictionary format'''
     error,sms=determine_y_url_(studentId,level)
@@ -208,13 +230,102 @@ def dictStudentResults(studentId:str,level:str)->dict:
     return result_dict
 
 
-# print(dictStudentResults('s3266/0064/2024','csee'))
+
+def two_three_id_part(school_no:str):
+    #xxxx/yyyy -> xxxx/xxxx/yyyy
+    school_no,year=school_no.split('/')
+    school_no=school_no+'/0000/'+year
+    return school_no
+
+
+
+
+#find the name of the school
+def find_school_name(school_no:str, level:str):
+    school_no = two_three_id_part(school_no)
+    url,year=determine_y_url_(school_no,level)
+    try:
+        soup= BeautifulSoup(response(url=url).content,'html.parser')
+        name=soup.find('h3').text
+        return name.split('\n')[0].replace('\r','').upper()
+    except Exception as e:
+        return "error", {e}
+
+
+
+
+# get school name,number,and result
+def sc_result(school_no:str,level:str)->dict:
+    '''Receive school number (xxxx/yyyy) and level, return dict of all school students results of specified level and year
+    {
+        "school_no": "P0104",
+        "school_name": "KISIMIRI",
+        "results": [
+            {
+                "CNO": "P0104/0001",
+                "PReM NO": "xxxxxxx"
+                "CANDIDATE NAME": "XXXXX XXXXX XXXXX",
+                "GENDER": "XX",
+                "SUBJECTS": ["XX", "XX", "XX"]
+            },
+    }
+    '''
+    sc_results={
+        "school_no":school_no.split('/')[0].upper(),
+        "school_name":find_school_name(school_no,level),
+    }
+    school_no=two_three_id_part(school_no)
+    header=get_headers(school_no,level)
+    if level=='ftna':
+        data=get_data_ftna(school_no,level)
+    else:
+        data=result_to_truple(school_no,level)
+
+    st_results=[]
+    for r in data:
+        st_results.append(dict(zip(header,r)))
+    sc_results["results"]=st_results
+    return sc_results
+
+
+
+def st_compare(students_id:list[str],level:str)->dict:
+    '''Compare students results of the same level, but with different school / years or same school / year'''
+    results={}
+    for i,student_id in enumerate(students_id):
+        results['student'+str(i+1)]=dictStudentResults(student_id,level)
+    return results
+
+
+
+
+def st_mentioned(students_id:list[tuple[str]]):
+    '''Return students who mentioned in the list, different levels / same level, different schools / same school, different years / same year'''
+    results={}
+    for i,student_id in enumerate(students_id):
+        results['student'+str(i+1)]=dictStudentResults(student_id[0],student_id[1])
+    return results
+
+
+
+#compare schools based on their results summary
+def sc_compare():
+    pass
+
+
+#school results summary
+def sc_performance():
+    pass
+
+
+
+
 class Necta:
     # def __init__(self):
     #     pass
     def st_result(self,studentId:str,level:Literal['sfna','psle','ftna','csee','acsee','gatce','dsee','gatscce'])->dict:
-        """Get student examination results from NECTA.
-    Args:
+        """Get a student examination results from NECTA.
+        Args:
         studentId (str): Student ID in format 'XXXXX/XXXX/YYYY' where YYYY is the year
         Example: 'S4177/0003/2023'
         level (str): Examination level, one of:
@@ -226,7 +337,7 @@ class Necta:
                     - 'gatce' (College, 2019-2024)
                     - 'dsee' (College, 2019-2024)
                     - 'gatscce' (College, 2019-2024)
-    Returns:
+        Returns:
         dict: Student results with headers as keys and results as values
             Example: {
                 "CNO": "XXXX/0003",
@@ -237,19 +348,79 @@ class Necta:
                 "DIV": "II",
                 "DETAILED SUBJECTS": "CIV-'D' HIST-'C' GEO-'B' KISW-'C' ENGL-'B' PHY-'D' CHEM-'B' BIO-'C' B/MATH-'C'"
             }
-    """
+        """
         self.result=dictStudentResults(studentId,level)
         return self.result
+
+    def sc_result(self,school_no:str,level:Literal['sfna','psle','ftna','csee','acsee','gatce','dsee','gatscce'])->dict:
+        '''Receive school number (xxxx/yyyy) and level, return dict of school no, school name and  all school students results of specified level and year
+        {
+        "school_no": "P0104",
+        "school_name": "KISIMIRI",
+        "results": [
+            {
+                "CNO": "P0104/0001",
+                "PReM NO": "xxxxxxx"
+                "CANDIDATE NAME": "XXXXX XXXXX XXXXX",
+                "GENDER": "XX",
+                "SUBJECTS": ["XX", "XX", "XX"]
+            },
+            ......
+            ]
+
+        }
+        '''
+        return sc_result(school_no,level)
+    
+    def st_compare(self, students_id:list[str],level:Literal['sfna','psle','ftna','csee','acsee','gatce','dsee','gatscce'])->dict:
+        '''Compare students results of the same level, different school / years or same school / year
+        Returns a dictionary of students results
+        Example: (['xxxx/xxxx/yyyy','xxxx/xxxx/yyyy','...'],'ftna')
+        {
+            "student1": {
+                "CNO": "XXXX/0003",
+                "PReM NO": "xxxxxxx"
+                "CANDIDATE NAME": "XXXXX XXXXX XXXXX",
+                .....},
+            "student2": {
+                "CNO": "XXXX/0003",
+                "PReM NO": "xxxxxxx"
+                "CANDIDATE NAME": "XXXXX XXXXX XXXXX",
+                .....},
+            ......
+        '''
+        return st_compare(students_id,level)
+
+    def st_mentioned(self,students_id:list[tuple[str]])->dict:
+        '''Return students who mentioned in list of tuple, different levels / same level, different schools / same school, different years / same year
+        Returns a dictionary of students results
+        Example: [('xxxx/xxxx/yyyy','ftna'),('xxxx/xxxx/yyyy','csee'),('...')]
+        {
+            "student1": {
+                "CNO": "XXXX/0003",
+                "PReM NO": "xxxxxxx"
+                "CANDIDATE NAME": "XXXXX XXXXX XXXXX",
+                .....},
+            "student2": {
+                "CNO": "XXXX/0003",
+                "PReM NO": "xxxxxxx"
+                "CANDIDATE NAME": "XXXXX XXXXX XXXXX",
+                .....},
+            ......
+        '''
+        return st_mentioned(students_id)
+
     def __str__(self):
         return str(self.result)
     def __repr__(self):
         return str(self.result)
 
-if __name__ == '__main__':
-    while True:
-        level=input('(csee/acsee/ftna/sfna/psle/gatce/dsee/gatscce): ').strip()
-        studentId=input('STUDENT ID (XXXXX/XXXX/XXXX): ').strip()
-        r=Necta().st_result(studentId,level)
-        for i in r:
-            print(f'{i}: {r[i]}')
-        print('---------------------------------------')
+
+
+
+# if __name__ == '__main__':
+#     while True:
+#         print(Necta().st_result('',''))
+#         print(Necta().sc_result('',''))
+#         print(Necta().st_compare('',''))
+#         print(Necta().st_mentioned('',''))
