@@ -8,7 +8,7 @@ with open("NectaPy/requirements.txt", "r", encoding="latin-1") as fh:
 
 setup(
     name="NectaPy",
-    version="0.9.0",
+    version="0.11.0",
     author="Henrylee",
     author_email="henrydionizi@gmail.com",
     description="A Python package for accessing NECTA (National Examinations Council of Tanzania) results",

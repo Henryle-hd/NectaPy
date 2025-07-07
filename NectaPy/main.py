@@ -42,7 +42,7 @@ def determine_y_url_(studentId:str,level:str)->tuple:
             if year>=2014 and year<=CURRENT_YEAR-1:
                 url=f'https://onlinesys.necta.go.tz/results/{year}/acsee/results/{schoolId}.htm'
             elif CURRENT_YEAR==2025:
-                url=f"https://matokeo.necta.go.tz/results/2025/acsee/results/p0101.htm"
+                url=f"https://matokeo.necta.go.tz/results/2025/acsee/results/{schoolId}.htm"
             else:
                 return "error",f"Invalid year. Please choose a year between 2014 and the {CURRENT_YEAR}."
         elif level.lower() =='ftna':
@@ -420,9 +420,9 @@ class Necta:
 
 
 
-if __name__ == '__main__':
-    while True:
-        print(Necta().st_result('P0101/0501/2025','acsee'))
+# if __name__ == '__main__':
+    # while True:
+        # print(Necta().st_result('P1587/0501/2025','acsee'))
         # print(Necta().sc_result('',''))
         # print(Necta().st_compare('',''))
         # print(Necta().st_mentioned('',''))
